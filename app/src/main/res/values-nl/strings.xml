@@ -14,13 +14,7 @@
     <string name="channel_description">Meldingen voor geplande medicatiedoses</string>
     <string name="about_button">Over</string>
     <string name="about_title">Over MediLight</string>
-    <string name="about_description">        Deze applicatie is bedoeld als hulp bij het bijhouden van je medicijnen. Het is niet bedoeld
-        om medisch advies te geven en geen enkele informatie die door deze applicatie wordt verstrekt mag verkeerd worden opgevat als zodanig. De makers van deze applicatie zijn niet verantwoordelijk voor gemiste
-        doses van uw medicijnen om welke reden dan ook. Als je medische hulp nodig hebt, neem dan contact op met een medische professional.
-        Door deze applicatie te gebruiken ga je akkoord met de bovenstaande voorwaarden en die van de GPL versie 2.0 licentie waaronder het is vrijgegeven.
-        waaronder het is vrijgegeven. \n\n
-
-        Deze applicatie is vrijgegeven onder de GNU Public License Version 2.</string>
+    <string name="about_description">This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses.</string>
     <string name="back_button">Terug</string>
     <string name="add_reminder_title">Herinnering toevoegen</string>
     <string name="reminders_list_title">Je herinneringen</string>
@@ -43,4 +37,12 @@
     <string name="mark_as_taken_button">Markeren als ingenomen</string>
     <string name="frequency_value_label">Frequentie: %1$s</string>
     <string name="default_medication_name">Medicijn</string>
+    <string name="backup_button">Back-up maken</string>
+    <string name="restore_button">Herstellen</string>
+    <string name="backup_success">Back-up succesvol</string>
+    <string name="backup_failed">Back-up mislukt: %1$s</string>
+    <string name="restore_success">Herstel succesvol</string>
+    <string name="restore_failed">Herstel mislukt: %1$s</string>
+    <string name="restore_confirm_title">Gegevens herstellen?</string>
+    <string name="restore_confirm_message">Dit vervangt alle huidige herinneringen door die uit de back-up. Weet je het zeker?</string>
 </resources>

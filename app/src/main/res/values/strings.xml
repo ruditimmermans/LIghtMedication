@@ -15,14 +15,8 @@
     <string name="channel_description">Notifications for scheduled medication doses</string>
     <string name="about_button">About</string>
     <string name="about_title">About MediLight</string>
-    <string name="about_description">This application is meant to assist in keeping track of your medications. It is not intended
-        to provide medical advice and no information provided by this application should be misconstrued
-        as such. The creators of this application are not responsible for any missed
-        doses of your medications for any reason. If you require medical assistance, please contact a medical professional.
-        By using this application, you are agreeing to the aforementioned terms as well as those of the GPL version 2.0 license under
-        which it is released. \n\n\n\n
-        This application is released under the GNU Public License Version 2.</string>
-    <string name="about_version" translatable="false">Version %1$s Copyright Ⓒ 2026 by R. Timmermans</string>
+    <string name="about_description">This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program. If not, see http://www.gnu.org/licenses.</string>
+    <string name="about_version" translatable="false">Version %1$s Copyright Ⓒ 2026-2027 by Rudi Timmermans</string>
     <string name="back_button">Back</string>
     <string name="add_reminder_title">Add Reminder</string>
     <string name="reminders_list_title">Your Reminders</string>
@@ -45,4 +39,12 @@
     <string name="mark_as_taken_button">Mark as taken</string>
     <string name="frequency_value_label">Frequency: %1$s</string>
     <string name="default_medication_name">Medication</string>
+    <string name="backup_button">Backup Data</string>
+    <string name="restore_button">Restore Data</string>
+    <string name="backup_success">Backup successful</string>
+    <string name="backup_failed">Backup failed: %1$s</string>
+    <string name="restore_success">Restore successful</string>
+    <string name="restore_failed">Restore failed: %1$s</string>
+    <string name="restore_confirm_title">Restore Data?</string>
+    <string name="restore_confirm_message">This will replace all current reminders with the ones from the backup. Are you sure?</string>
 </resources>

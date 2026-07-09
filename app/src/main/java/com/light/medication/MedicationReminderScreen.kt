@@ -69,8 +69,34 @@ fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
     val configuration = LocalConfiguration.current
     val isWideScreen = configuration.screenWidthDp > 600 || configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
+    val backupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            viewModel.exportBackup(it,
+                onSuccess = { Toast.makeText(context, context.getString(R.string.backup_success), Toast.LENGTH_SHORT).show() },
+                onError = { e -> Toast.makeText(context, context.getString(R.string.backup_failed, e.message), Toast.LENGTH_LONG).show() }
+            )
+        }
+    }
+
+    val restoreLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            viewModel.restoreBackup(it,
+                onSuccess = { Toast.makeText(context, context.getString(R.string.restore_success), Toast.LENGTH_SHORT).show() },
+                onError = { e -> Toast.makeText(context, context.getString(R.string.restore_failed, e.message), Toast.LENGTH_LONG).show() }
+            )
+        }
+    }
+
     if (showAboutScreen) {
-        AboutScreen(onBack = { showAboutScreen = false })
+        AboutScreen(
+            onBack = { showAboutScreen = false },
+            onBackup = { backupLauncher.launch("medilight_backup.json") },
+            onRestore = { restoreLauncher.launch(arrayOf("application/json")) }
+        )
     } else {
         Scaffold(
             topBar = {
@@ -497,8 +523,36 @@ fun ReminderDialog(
 }
 
 @Composable
-fun AboutScreen(onBack: () -> Unit) {
+fun AboutScreen(
+    onBack: () -> Unit,
+    onBackup: () -> Unit,
+    onRestore: () -> Unit
+) {
     BackHandler(onBack = onBack)
+    var showRestoreConfirm by remember { mutableStateOf(false) }
+
+    if (showRestoreConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRestoreConfirm = false },
+            title = { Text(stringResource(R.string.restore_confirm_title)) },
+            text = { Text(stringResource(R.string.restore_confirm_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRestoreConfirm = false
+                        onRestore()
+                    }
+                ) {
+                    Text(stringResource(android.R.string.ok))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestoreConfirm = false }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
+    }
     
     Column(
         modifier = Modifier
@@ -543,6 +597,32 @@ fun AboutScreen(onBack: () -> Unit) {
         )
         
         Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = onBackup,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        ) {
+            Text(stringResource(R.string.backup_button))
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = { showRestoreConfirm = true },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        ) {
+            Text(stringResource(R.string.restore_button))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
         
         Button(
             onClick = onBack,

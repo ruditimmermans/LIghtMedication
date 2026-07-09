@@ -3,10 +3,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 //    alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.google.devtools.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
-val appVersionName = "1.7"
-val appVersionCode = 7
+val appVersionName = "1.8"
+val appVersionCode = 8
 
 base {
     archivesName = "MediLight-v$appVersionName"
@@ -30,6 +31,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk { abiFilters += "arm64-v8a" }
+        resConfigs("en","nl" )
     }
 
     buildTypes {
@@ -49,6 +51,10 @@ android {
         compose = true
         buildConfig = true
     }
+}
+
+ksp {
+    arg("room.incremental", "true")
 }
 
 dependencies {

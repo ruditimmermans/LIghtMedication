@@ -1,6 +1,7 @@
 package com.light.medication.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.light.medication.ReminderScheduler
@@ -10,6 +11,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class ReminderViewModel(application: Application) : AndroidViewModel(application) {
     private val reminderDao = AppDatabase.getDatabase(application).reminderDao()
@@ -100,6 +103,47 @@ class ReminderViewModel(application: Application) : AndroidViewModel(application
             // Reschedule for the next period, skipping today if it hasn't happened yet
             if (updated.isEnabled) {
                 scheduler.scheduleReminder(updated, forceNext = true)
+            }
+        }
+    }
+
+    fun exportBackup(uri: Uri, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val reminders = allReminders.value
+                val jsonData = Json { prettyPrint = true }.encodeToString(reminders)
+                getApplication<Application>().contentResolver.openOutputStream(uri)?.use {
+                    it.write(jsonData.toByteArray())
+                }
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e)
+            }
+        }
+    }
+
+    fun restoreBackup(uri: Uri, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val inputStream = getApplication<Application>().contentResolver.openInputStream(uri)
+                val jsonData = inputStream?.bufferedReader()?.use { it.readText() } ?: throw Exception("Failed to read file")
+                val reminders = Json.decodeFromString<List<Reminder>>(jsonData)
+
+                // Clear existing reminders and their alarms
+                allReminders.value.forEach { scheduler.cancelReminder(it) }
+                reminderDao.deleteAll()
+
+                // Insert new reminders and schedule them
+                reminders.forEach {
+                    val newId = reminderDao.insert(it.copy(id = 0))
+                    val newReminder = it.copy(id = newId.toInt())
+                    if (newReminder.isEnabled) {
+                        scheduler.scheduleReminder(newReminder)
+                    }
+                }
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e)
             }
         }
     }

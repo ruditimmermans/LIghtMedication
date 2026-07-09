@@ -16,4 +16,7 @@ interface ReminderDao {
 
     @Update
     suspend fun update(reminder: Reminder)
+
+    @Query("DELETE FROM reminders")
+    suspend fun deleteAll()
 }
