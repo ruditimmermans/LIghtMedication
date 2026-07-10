@@ -1,13 +1,11 @@
+val appVersionName = "1.9"
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-//    alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.google.devtools.ksp)
     alias(libs.plugins.kotlin.serialization)
 }
-
-val appVersionName = "1.8"
-val appVersionCode = 8
 
 base {
     archivesName = "MediLight-v$appVersionName"
@@ -15,23 +13,18 @@ base {
 
 android {
     namespace = "com.light.medication"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.light.medication"
+        applicationId = "com.light.lightemail"
         minSdk = 33
-        targetSdk = 36
-        versionCode = appVersionCode
+        targetSdk = 37
+        versionCode = 9
         versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk { abiFilters += "arm64-v8a" }
-        resConfigs("en","nl" )
     }
 
     buildTypes {

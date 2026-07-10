@@ -42,6 +42,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.light.medication.data.Reminder
 import com.light.medication.util.TimeUtils
 import com.light.medication.viewmodel.ReminderViewModel
+import com.light.medication.BuildConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +69,7 @@ fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
     val reminders by viewModel.allReminders.collectAsState()
     val configuration = LocalConfiguration.current
     val isWideScreen = configuration.screenWidthDp > 600 || configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val isBoxyScreen = !isWideScreen && (configuration.screenWidthDp.toFloat() / configuration.screenHeightDp.toFloat() > 0.75f)
 
     val backupLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
@@ -95,7 +97,8 @@ fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
         AboutScreen(
             onBack = { showAboutScreen = false },
             onBackup = { backupLauncher.launch("medilight_backup.json") },
-            onRestore = { restoreLauncher.launch(arrayOf("application/json")) }
+            onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
+            compact = isBoxyScreen
         )
     } else {
         Scaffold(
@@ -120,8 +123,8 @@ fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
             }
         ) { padding ->
             Column(modifier = Modifier.padding(padding)) {
-                BatteryOptimizationBanner()
-                ExactAlarmPermissionBanner()
+                BatteryOptimizationBanner(compact = isBoxyScreen)
+                ExactAlarmPermissionBanner(compact = isBoxyScreen)
                 
                 if (isWideScreen) {
                     ReminderGrid(
@@ -139,6 +142,7 @@ fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
                         onToggle = { viewModel.toggleReminder(it) },
                         onEdit = { reminderToEdit = it },
                         onTake = { viewModel.markAsTaken(it) },
+                        compact = isBoxyScreen,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -169,7 +173,7 @@ fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
 }
 
 @Composable
-fun ExactAlarmPermissionBanner() {
+fun ExactAlarmPermissionBanner(compact: Boolean = false) {
     val context = LocalContext.current
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -179,17 +183,17 @@ fun ExactAlarmPermissionBanner() {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = if (compact) 8.dp else 16.dp, vertical = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
             ) {
                 Row(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(if (compact) 8.dp else 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = stringResource(R.string.exact_alarm_permission_toast),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
                     }
@@ -199,9 +203,10 @@ fun ExactAlarmPermissionBanner() {
                                 data = Uri.parse("package:${context.packageName}")
                             }
                             context.startActivity(intent)
-                        }
+                        },
+                        contentPadding = if (compact) PaddingValues(horizontal = 8.dp, vertical = 4.dp) else ButtonDefaults.ContentPadding
                     ) {
-                        Text(stringResource(R.string.edit_button))
+                        Text(stringResource(R.string.edit_button), style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge)
                     }
                 }
             }
@@ -210,7 +215,7 @@ fun ExactAlarmPermissionBanner() {
 }
 
 @Composable
-fun BatteryOptimizationBanner() {
+fun BatteryOptimizationBanner(compact: Boolean = false) {
     val context = LocalContext.current
     val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
     var isOptimized by remember {
@@ -221,22 +226,24 @@ fun BatteryOptimizationBanner() {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(if (compact) 8.dp else 16.dp),
             border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(if (compact) 8.dp else 12.dp)) {
                 Text(
                     text = stringResource(R.string.battery_optimization_title),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
-                Text(
-                    text = stringResource(R.string.battery_optimization_message),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+                if (!compact) {
+                    Text(
+                        text = stringResource(R.string.battery_optimization_message),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+                Spacer(modifier = Modifier.height(if (compact) 4.dp else 8.dp))
                 Button(
                     onClick = {
                         val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
@@ -244,9 +251,10 @@ fun BatteryOptimizationBanner() {
                         }
                         context.startActivity(intent)
                     },
-                    modifier = Modifier.align(Alignment.End)
+                    modifier = Modifier.align(Alignment.End),
+                    contentPadding = if (compact) PaddingValues(horizontal = 8.dp, vertical = 4.dp) else ButtonDefaults.ContentPadding
                 ) {
-                    Text(stringResource(R.string.disable_optimization_button))
+                    Text(stringResource(R.string.disable_optimization_button), style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge)
                 }
             }
         }
@@ -288,6 +296,7 @@ fun ReminderList(
     onToggle: (Reminder) -> Unit,
     onEdit: (Reminder) -> Unit,
     onTake: (Reminder) -> Unit,
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     if (reminders.isEmpty()) {
@@ -297,11 +306,11 @@ fun ReminderList(
     } else {
         LazyColumn(
             modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            contentPadding = PaddingValues(if (compact) 8.dp else 16.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 8.dp)
         ) {
             items(reminders) { reminder ->
-                ReminderItem(reminder, onDelete, onToggle, onEdit, onTake)
+                ReminderItem(reminder, onDelete, onToggle, onEdit, onTake, compact)
             }
         }
     }
@@ -313,14 +322,15 @@ fun ReminderItem(
     onDelete: (Reminder) -> Unit,
     onToggle: (Reminder) -> Unit,
     onEdit: (Reminder) -> Unit,
-    onTake: (Reminder) -> Unit
+    onTake: (Reminder) -> Unit,
+    compact: Boolean = false
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(if (compact) 10.dp else 16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -344,41 +354,70 @@ fun ReminderItem(
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
+            if (compact) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Text(
                         text = stringResource(R.string.pill_info, reminder.pillCount, TimeUtils.formatTime(reminder.hour, reminder.minute)),
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodySmall
                     )
-                    Text(
-                        text = stringResource(R.string.frequency_value_label, when(reminder.frequency) {
-                            "Daily" -> stringResource(R.string.frequency_daily)
-                            "Weekly" -> stringResource(R.string.frequency_weekly)
-                            "Monthly" -> stringResource(R.string.frequency_monthly)
-                            else -> reminder.frequency
-                        }),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
+                    Row {
+                        IconButton(onClick = { onTake(reminder) }, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = stringResource(R.string.mark_as_taken_button),
+                                tint = if (reminder.lastTakenTimestamp != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        IconButton(onClick = { onEdit(reminder) }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_button), modifier = Modifier.size(20.dp))
+                        }
+                        IconButton(onClick = { onDelete(reminder) }, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_button), modifier = Modifier.size(20.dp))
+                        }
+                    }
                 }
-                
-                Row {
-                    IconButton(onClick = { onTake(reminder) }) {
-                        Icon(
-                            Icons.Default.Check,
-                            contentDescription = stringResource(R.string.mark_as_taken_button),
-                            tint = if (reminder.lastTakenTimestamp != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.pill_info, reminder.pillCount, TimeUtils.formatTime(reminder.hour, reminder.minute)),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = stringResource(R.string.frequency_value_label, when(reminder.frequency) {
+                                "Daily" -> stringResource(R.string.frequency_daily)
+                                "Weekly" -> stringResource(R.string.frequency_weekly)
+                                "Monthly" -> stringResource(R.string.frequency_monthly)
+                                else -> reminder.frequency
+                            }),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.secondary
                         )
                     }
-                    IconButton(onClick = { onEdit(reminder) }) {
-                        Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_button))
-                    }
-                    IconButton(onClick = { onDelete(reminder) }) {
-                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_button))
+                    
+                    Row {
+                        IconButton(onClick = { onTake(reminder) }) {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = stringResource(R.string.mark_as_taken_button),
+                                tint = if (reminder.lastTakenTimestamp != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                            )
+                        }
+                        IconButton(onClick = { onEdit(reminder) }) {
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit_button))
+                        }
+                        IconButton(onClick = { onDelete(reminder) }) {
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete_button))
+                        }
                     }
                 }
             }
@@ -417,6 +456,9 @@ fun ReminderDialog(
     onConfirm: (String, String, Int, Int, String) -> Unit
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val isBoxyScreen = configuration.screenWidthDp.toFloat() / configuration.screenHeightDp.toFloat() > 0.7f
+    
     var name by remember { mutableStateOf(reminder?.medicationName ?: "") }
     var count by remember { mutableStateOf(reminder?.pillCount ?: "1") }
     var hour by remember { mutableStateOf(reminder?.hour ?: 8) }
@@ -454,7 +496,12 @@ fun ReminderDialog(
             },
             text = {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    TimePicker(state = timePickerState)
+                    if (isBoxyScreen) {
+                        // TimeInput is more compact than TimePicker
+                        TimeInput(state = timePickerState)
+                    } else {
+                        TimePicker(state = timePickerState)
+                    }
                 }
             }
         )
@@ -462,27 +509,36 @@ fun ReminderDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(if (reminder == null) R.string.add_reminder_title else R.string.edit_reminder_title)) },
+        title = { Text(stringResource(if (reminder == null) R.string.add_reminder_title else R.string.edit_reminder_title), style = if (isBoxyScreen) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(if (isBoxyScreen) 4.dp else 8.dp)
+            ) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(stringResource(R.string.medication_name_label)) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
                 OutlinedTextField(
                     value = count,
                     onValueChange = { count = it },
                     label = { Text(stringResource(R.string.pill_count_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
-                Button(onClick = { showTimePicker = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.set_time_button, TimeUtils.formatTime(hour, minute)))
+                Button(
+                    onClick = { showTimePicker = true }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = if (isBoxyScreen) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
+                ) {
+                    Text(stringResource(R.string.set_time_button, TimeUtils.formatTime(hour, minute)), style = if (isBoxyScreen) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge)
                 }
                 
-                Text(stringResource(R.string.frequency_label), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.frequency_label), style = if (isBoxyScreen) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge)
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     frequencies.forEachIndexed { index, label ->
                         SegmentedButton(
@@ -490,12 +546,15 @@ fun ReminderDialog(
                             onClick = { frequency = label },
                             selected = frequency == label
                         ) {
-                            Text(when(label) {
-                                "Daily" -> stringResource(R.string.frequency_daily)
-                                "Weekly" -> stringResource(R.string.frequency_weekly)
-                                "Monthly" -> stringResource(R.string.frequency_monthly)
-                                else -> label
-                            })
+                            Text(
+                                text = when(label) {
+                                    "Daily" -> stringResource(R.string.frequency_daily)
+                                    "Weekly" -> stringResource(R.string.frequency_weekly)
+                                    "Monthly" -> stringResource(R.string.frequency_monthly)
+                                    else -> label
+                                },
+                                style = if (isBoxyScreen) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelMedium
+                            )
                         }
                     }
                 }
@@ -526,7 +585,8 @@ fun ReminderDialog(
 fun AboutScreen(
     onBack: () -> Unit,
     onBackup: () -> Unit,
-    onRestore: () -> Unit
+    onRestore: () -> Unit,
+    compact: Boolean = false
 ) {
     BackHandler(onBack = onBack)
     var showRestoreConfirm by remember { mutableStateOf(false) }
@@ -558,23 +618,23 @@ fun AboutScreen(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(if (compact) 16.dp else 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = if (compact) Arrangement.Top else Arrangement.Center
     ) {
         // Use a smaller icon for small screens
         Icon(
             imageVector = Icons.Default.Info,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(if (compact) 48.dp else 64.dp),
             tint = MaterialTheme.colorScheme.primary
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(if (compact) 8.dp else 16.dp))
         
         Text(
             text = stringResource(R.string.about_title),
-            style = MaterialTheme.typography.headlineSmall,
+            style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
@@ -583,12 +643,12 @@ fun AboutScreen(
         
         Text(
             text = stringResource(R.string.about_description),
-            style = MaterialTheme.typography.bodyMedium,
+            style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(if (compact) 8.dp else 16.dp))
         
         Text(
             text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
@@ -596,7 +656,7 @@ fun AboutScreen(
             color = MaterialTheme.colorScheme.onBackground
         )
         
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(if (compact) 16.dp else 32.dp))
 
         Button(
             onClick = onBackup,
@@ -604,12 +664,13 @@ fun AboutScreen(
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            )
+            ),
+            contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
         ) {
             Text(stringResource(R.string.backup_button))
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(if (compact) 4.dp else 8.dp))
 
         Button(
             onClick = { showRestoreConfirm = true },
@@ -617,12 +678,13 @@ fun AboutScreen(
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            )
+            ),
+            contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
         ) {
             Text(stringResource(R.string.restore_button))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(if (compact) 8.dp else 16.dp))
         
         Button(
             onClick = onBack,
@@ -630,7 +692,8 @@ fun AboutScreen(
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
-            )
+            ),
+            contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
         ) {
             Text(stringResource(R.string.back_button))
         }
