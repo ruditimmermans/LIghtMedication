@@ -14,6 +14,7 @@ googleGmsGoogleServices = "4.4.4"
 room = "2.7.0-alpha13"
 kotlinxSerialization = "1.6.3"
 ksp = "2.2.10-2.0.2"
+okhttp = "4.12.0"
 
 [libraries]
 # ... (existing entries)
@@ -21,6 +22,7 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

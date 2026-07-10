@@ -47,4 +47,10 @@
     <string name="restore_failed">Restore failed: %1$s</string>
     <string name="restore_confirm_title">Restore Data?</string>
     <string name="restore_confirm_message">This will replace all current reminders with the ones from the backup. Are you sure?</string>
+    <string name="check_update_button">Check for Update</string>
+    <string name="update_available_title">Update Available</string>
+    <string name="update_available_message">A new version (%1$s) is available. Would you like to download and install it?</string>
+    <string name="downloading_update">Downloading update...</string>
+    <string name="no_update_found">You have the latest version</string>
+    <string name="update_failed">Update failed</string>
 </resources>

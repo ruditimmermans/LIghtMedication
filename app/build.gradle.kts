@@ -1,4 +1,4 @@
-val appVersionName = "1.9"
+val appVersionName = "2.0"
 
 plugins {
     alias(libs.plugins.android.application)
@@ -19,7 +19,7 @@ android {
         applicationId = "com.light.medication"
         minSdk = 33
         targetSdk = 37
-        versionCode = 9
+        versionCode = 10
         versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

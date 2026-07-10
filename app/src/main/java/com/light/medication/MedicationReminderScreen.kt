@@ -41,8 +41,13 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.light.medication.data.Reminder
 import com.light.medication.util.TimeUtils
+import com.light.medication.util.AppUpdater
+import com.light.medication.util.GitHubRelease
 import com.light.medication.viewmodel.ReminderViewModel
 import com.light.medication.BuildConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -589,7 +594,14 @@ fun AboutScreen(
     compact: Boolean = false
 ) {
     BackHandler(onBack = onBack)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val updater = remember { AppUpdater(context) }
+    
     var showRestoreConfirm by remember { mutableStateOf(false) }
+    var updateRelease by remember { mutableStateOf<GitHubRelease?>(null) }
+    var isCheckingUpdate by remember { mutableStateOf(false) }
+    var isDownloading by remember { mutableStateOf(false) }
 
     if (showRestoreConfirm) {
         AlertDialog(
@@ -614,14 +626,51 @@ fun AboutScreen(
         )
     }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(if (compact) 16.dp else 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = if (compact) Arrangement.Top else Arrangement.Center
-    ) {
+        if (isDownloading) {
+            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+            Text(stringResource(R.string.downloading_update), style = MaterialTheme.typography.bodySmall)
+        }
+
+        updateRelease?.let { release ->
+            AlertDialog(
+                onDismissRequest = { updateRelease = null },
+                title = { Text(stringResource(R.string.update_available_title)) },
+                text = { Text(stringResource(R.string.update_available_message, release.tagName)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            updateRelease = null
+                            isDownloading = true
+                            scope.launch {
+                                try {
+                                    updater.downloadAndInstall(release)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, R.string.update_failed, Toast.LENGTH_LONG).show()
+                                } finally {
+                                    isDownloading = false
+                                }
+                            }
+                        }
+                    ) {
+                        Text(stringResource(android.R.string.ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { updateRelease = null }) {
+                        Text(stringResource(R.string.cancel_button))
+                    }
+                }
+            )
+        }
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(if (compact) 16.dp else 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = if (compact) Arrangement.Top else Arrangement.Center
+        ) {
         // Use a smaller icon for small screens
         Icon(
             imageVector = Icons.Default.Info,
@@ -657,6 +706,38 @@ fun AboutScreen(
         )
         
         Spacer(modifier = Modifier.height(if (compact) 16.dp else 32.dp))
+
+        Button(
+            onClick = {
+                if (!isCheckingUpdate) {
+                    isCheckingUpdate = true
+                    scope.launch {
+                        val release = updater.checkForUpdate()
+                        isCheckingUpdate = false
+                        if (release != null) {
+                            updateRelease = release
+                        } else {
+                            Toast.makeText(context, R.string.no_update_found, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isCheckingUpdate,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+            ),
+            contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
+        ) {
+            if (isCheckingUpdate) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onTertiaryContainer)
+            } else {
+                Text(stringResource(R.string.check_update_button))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(if (compact) 4.dp else 8.dp))
 
         Button(
             onClick = onBackup,

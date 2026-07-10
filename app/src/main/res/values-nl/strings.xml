@@ -45,4 +45,10 @@
     <string name="restore_failed">Herstel mislukt: %1$s</string>
     <string name="restore_confirm_title">Gegevens herstellen?</string>
     <string name="restore_confirm_message">Dit vervangt alle huidige herinneringen door die uit de back-up. Weet je het zeker?</string>
+    <string name="check_update_button">Controleren op update</string>
+    <string name="update_available_title">Update beschikbaar</string>
+    <string name="update_available_message">Er is een nieuwe versie (%1$s) beschikbaar. Wilt u deze downloaden en installeren?</string>
+    <string name="downloading_update">Update downloaden…</string>
+    <string name="no_update_found">U heeft de nieuwste versie</string>
+    <string name="update_failed">Update mislukt</string>
 </resources>
