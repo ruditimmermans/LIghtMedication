@@ -16,7 +16,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.light.lightemail"
+        applicationId = "com.light.medication"
         minSdk = 33
         targetSdk = 37
         versionCode = 9
