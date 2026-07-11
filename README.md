@@ -4,7 +4,7 @@ An Medication app that helps you keep track of your medications.
 
 ## About
 
-MediLight is an Ikko MindOne app designed to make it easier for users to keep track of their medications and to help them remember to take them. 
+MediLight is an Light Phone 3 app designed to make it easier for users to keep track of their medications and to help them remember to take them. 
 All user data is stored locally is not share with either the developer or any other third party.
 
 ## Screenshots 📷
