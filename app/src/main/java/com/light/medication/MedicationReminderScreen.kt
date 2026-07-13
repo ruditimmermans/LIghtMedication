@@ -11,6 +11,8 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -120,36 +122,83 @@ fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
             floatingActionButton = {
                 FloatingActionButton(
                     onClick = { showAddDialog = true },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                    modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.outline, FloatingActionButtonDefaults.shape),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    shape = FloatingActionButtonDefaults.shape
                 ) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_reminder_title))
                 }
             }
         ) { padding ->
-            Column(modifier = Modifier.padding(padding)) {
-                BatteryOptimizationBanner(compact = isBoxyScreen)
-                ExactAlarmPermissionBanner(compact = isBoxyScreen)
-                
-                if (isWideScreen) {
-                    ReminderGrid(
-                        reminders = reminders,
-                        onDelete = { viewModel.deleteReminder(it) },
-                        onToggle = { viewModel.toggleReminder(it) },
-                        onEdit = { reminderToEdit = it },
-                        onTake = { viewModel.markAsTaken(it) },
-                        modifier = Modifier.weight(1f)
-                    )
-                } else {
-                    ReminderList(
-                        reminders = reminders,
-                        onDelete = { viewModel.deleteReminder(it) },
-                        onToggle = { viewModel.toggleReminder(it) },
-                        onEdit = { reminderToEdit = it },
-                        onTake = { viewModel.markAsTaken(it) },
-                        compact = isBoxyScreen,
-                        modifier = Modifier.weight(1f)
-                    )
+            if (isWideScreen) {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 300.dp),
+                    modifier = Modifier.padding(padding).fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        top = 16.dp,
+                        end = 16.dp,
+                        bottom = 80.dp
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                        BatteryOptimizationBanner(compact = isBoxyScreen)
+                    }
+                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                        ExactAlarmPermissionBanner(compact = isBoxyScreen)
+                    }
+                    if (reminders.isEmpty()) {
+                        item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                            Box(modifier = Modifier.fillMaxWidth().padding(top = 64.dp), contentAlignment = Alignment.Center) {
+                                Text(stringResource(R.string.no_reminders), style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
+                    } else {
+                        items(reminders) { reminder ->
+                            ReminderItem(
+                                reminder = reminder,
+                                onDelete = { viewModel.deleteReminder(it) },
+                                onToggle = { viewModel.toggleReminder(it) },
+                                onEdit = { reminderToEdit = it },
+                                onTake = { viewModel.markAsTaken(it) }
+                            )
+                        }
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.padding(padding).fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = if (isBoxyScreen) 8.dp else 16.dp,
+                        top = if (isBoxyScreen) 8.dp else 16.dp,
+                        end = if (isBoxyScreen) 8.dp else 16.dp,
+                        bottom = 80.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(if (isBoxyScreen) 4.dp else 8.dp)
+                ) {
+                    item { BatteryOptimizationBanner(compact = isBoxyScreen) }
+                    item { ExactAlarmPermissionBanner(compact = isBoxyScreen) }
+                    if (reminders.isEmpty()) {
+                        item {
+                            Box(modifier = Modifier.fillParentMaxSize().padding(top = 64.dp), contentAlignment = Alignment.Center) {
+                                Text(stringResource(R.string.no_reminders), style = MaterialTheme.typography.bodyLarge)
+                            }
+                        }
+                    } else {
+                        items(reminders) { reminder ->
+                            ReminderItem(
+                                reminder = reminder,
+                                onDelete = { viewModel.deleteReminder(it) },
+                                onToggle = { viewModel.toggleReminder(it) },
+                                onEdit = { reminderToEdit = it },
+                                onTake = { viewModel.markAsTaken(it) },
+                                compact = isBoxyScreen
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -209,6 +258,8 @@ fun ExactAlarmPermissionBanner(compact: Boolean = false) {
                             }
                             context.startActivity(intent)
                         },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         contentPadding = if (compact) PaddingValues(horizontal = 8.dp, vertical = 4.dp) else ButtonDefaults.ContentPadding
                     ) {
                         Text(stringResource(R.string.edit_button), style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge)
@@ -257,6 +308,8 @@ fun BatteryOptimizationBanner(compact: Boolean = false) {
                         context.startActivity(intent)
                     },
                     modifier = Modifier.align(Alignment.End),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     contentPadding = if (compact) PaddingValues(horizontal = 8.dp, vertical = 4.dp) else ButtonDefaults.ContentPadding
                 ) {
                     Text(stringResource(R.string.disable_optimization_button), style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge)
@@ -266,60 +319,6 @@ fun BatteryOptimizationBanner(compact: Boolean = false) {
     }
 }
 
-@Composable
-fun ReminderGrid(
-    reminders: List<Reminder>,
-    onDelete: (Reminder) -> Unit,
-    onToggle: (Reminder) -> Unit,
-    onEdit: (Reminder) -> Unit,
-    onTake: (Reminder) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (reminders.isEmpty()) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.no_reminders), style = MaterialTheme.typography.bodyLarge)
-        }
-    } else {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 300.dp),
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(reminders) { reminder ->
-                ReminderItem(reminder, onDelete, onToggle, onEdit, onTake)
-            }
-        }
-    }
-}
-
-@Composable
-fun ReminderList(
-    reminders: List<Reminder>,
-    onDelete: (Reminder) -> Unit,
-    onToggle: (Reminder) -> Unit,
-    onEdit: (Reminder) -> Unit,
-    onTake: (Reminder) -> Unit,
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    if (reminders.isEmpty()) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.no_reminders), style = MaterialTheme.typography.bodyLarge)
-        }
-    } else {
-        LazyColumn(
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(if (compact) 8.dp else 16.dp),
-            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 8.dp)
-        ) {
-            items(reminders) { reminder ->
-                ReminderItem(reminder, onDelete, onToggle, onEdit, onTake, compact)
-            }
-        }
-    }
-}
 
 @Composable
 fun ReminderItem(
@@ -350,7 +349,8 @@ fun ReminderItem(
                         },
                         update = { view ->
                             view.isChecked = reminder.isEnabled
-                            view.setText(reminder.medicationName)
+                            val takenToday = TimeUtils.isTakenToday(reminder.lastTakenTimestamp)
+                            view.setText(if (takenToday) "✓ ${reminder.medicationName}" else reminder.medicationName)
                         },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -374,7 +374,7 @@ fun ReminderItem(
                             Icon(
                                 Icons.Default.Check,
                                 contentDescription = stringResource(R.string.mark_as_taken_button),
-                                tint = if (reminder.lastTakenTimestamp != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                tint = if (TimeUtils.isTakenToday(reminder.lastTakenTimestamp)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -414,7 +414,7 @@ fun ReminderItem(
                             Icon(
                                 Icons.Default.Check,
                                 contentDescription = stringResource(R.string.mark_as_taken_button),
-                                tint = if (reminder.lastTakenTimestamp != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                tint = if (TimeUtils.isTakenToday(reminder.lastTakenTimestamp)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
                             )
                         }
                         IconButton(onClick = { onEdit(reminder) }) {
@@ -482,19 +482,23 @@ fun ReminderDialog(
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         hour = timePickerState.hour
                         minute = timePickerState.minute
                         showTimePicker = false
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
                     Text(stringResource(android.R.string.ok))
                 }
             },
             dismissButton = {
-                TextButton(
-                    onClick = { showTimePicker = false }
+                Button(
+                    onClick = { showTimePicker = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
                     Text(stringResource(R.string.cancel_button))
                 }
@@ -538,6 +542,8 @@ fun ReminderDialog(
                 Button(
                     onClick = { showTimePicker = true }, 
                     modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     contentPadding = if (isBoxyScreen) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
                 ) {
                     Text(stringResource(R.string.set_time_button, TimeUtils.formatTime(hour, minute)), style = if (isBoxyScreen) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge)
@@ -549,7 +555,13 @@ fun ReminderDialog(
                         SegmentedButton(
                             shape = SegmentedButtonDefaults.itemShape(index = index, count = frequencies.size),
                             onClick = { frequency = label },
-                            selected = frequency == label
+                            selected = frequency == label,
+                            colors = SegmentedButtonDefaults.colors(
+                                activeContainerColor = MaterialTheme.colorScheme.onSurface,
+                                activeContentColor = MaterialTheme.colorScheme.surface,
+                                inactiveContainerColor = MaterialTheme.colorScheme.surface,
+                                inactiveContentColor = MaterialTheme.colorScheme.onSurface
+                            )
                         ) {
                             Text(
                                 text = when(label) {
@@ -566,20 +578,26 @@ fun ReminderDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = {
                     if (name.isNotBlank() && count.isNotBlank()) {
                         onConfirm(name, count, hour, minute, frequency)
                     } else {
                         Toast.makeText(context, context.getString(R.string.input_error_toast), Toast.LENGTH_SHORT).show()
                     }
-                }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
                 Text(stringResource(if (reminder == null) R.string.schedule_button else R.string.update_button))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            ) {
                 Text(stringResource(R.string.cancel_button))
             }
         }
@@ -609,77 +627,90 @@ fun AboutScreen(
             title = { Text(stringResource(R.string.restore_confirm_title)) },
             text = { Text(stringResource(R.string.restore_confirm_message)) },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         showRestoreConfirm = false
                         onRestore()
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                 ) {
                     Text(stringResource(android.R.string.ok))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showRestoreConfirm = false }) {
+                Button(
+                    onClick = { showRestoreConfirm = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
                     Text(stringResource(R.string.cancel_button))
                 }
             }
         )
     }
     
-        if (isDownloading) {
-            CircularProgressIndicator(modifier = Modifier.padding(16.dp))
-            Text(stringResource(R.string.downloading_update), style = MaterialTheme.typography.bodySmall)
-        }
-
-        updateRelease?.let { release ->
-            AlertDialog(
-                onDismissRequest = { updateRelease = null },
-                title = { Text(stringResource(R.string.update_available_title)) },
-                text = { Text(stringResource(R.string.update_available_message, release.tagName)) },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            updateRelease = null
-                            isDownloading = true
-                            scope.launch {
-                                try {
-                                    updater.downloadAndInstall(release)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, R.string.update_failed, Toast.LENGTH_LONG).show()
-                                } finally {
-                                    isDownloading = false
-                                }
+    if (updateRelease != null) {
+        AlertDialog(
+            onDismissRequest = { updateRelease = null },
+            title = { Text(stringResource(R.string.update_available_title)) },
+            text = { Text(stringResource(R.string.update_available_message, updateRelease!!.tagName)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val release = updateRelease!!
+                        updateRelease = null
+                        isDownloading = true
+                        scope.launch {
+                            try {
+                                updater.downloadAndInstall(release)
+                            } catch (e: Exception) {
+                                Toast.makeText(context, R.string.update_failed, Toast.LENGTH_LONG).show()
+                            } finally {
+                                isDownloading = false
                             }
                         }
-                    ) {
-                        Text(stringResource(android.R.string.ok))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { updateRelease = null }) {
-                        Text(stringResource(R.string.cancel_button))
-                    }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
+                    Text(stringResource(android.R.string.ok))
                 }
-            )
+            },
+            dismissButton = {
+                Button(
+                    onClick = { updateRelease = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                ) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(if (compact) 12.dp else 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = if (compact) Arrangement.Top else Arrangement.Center
+    ) {
+        if (isDownloading) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
+            Text(stringResource(R.string.downloading_update), style = MaterialTheme.typography.labelSmall)
+            Spacer(modifier = Modifier.height(16.dp))
         }
-        
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(if (compact) 16.dp else 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = if (compact) Arrangement.Top else Arrangement.Center
-        ) {
-        // Use a smaller icon for small screens
+
         Icon(
             imageVector = Icons.Default.Info,
             contentDescription = null,
-            modifier = Modifier.size(if (compact) 48.dp else 64.dp),
+            modifier = Modifier.size(if (compact) 40.dp else 64.dp),
             tint = MaterialTheme.colorScheme.primary
         )
         
-        Spacer(modifier = Modifier.height(if (compact) 8.dp else 16.dp))
+        Spacer(modifier = Modifier.height(if (compact) 4.dp else 16.dp))
         
         Text(
             text = stringResource(R.string.about_title),
@@ -688,7 +719,7 @@ fun AboutScreen(
             color = MaterialTheme.colorScheme.primary
         )
         
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(if (compact) 4.dp else 8.dp))
         
         Text(
             text = stringResource(R.string.about_description),
@@ -697,7 +728,7 @@ fun AboutScreen(
             color = MaterialTheme.colorScheme.onBackground
         )
         
-        Spacer(modifier = Modifier.height(if (compact) 8.dp else 16.dp))
+        Spacer(modifier = Modifier.height(if (compact) 4.dp else 16.dp))
         
         Text(
             text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
@@ -705,7 +736,7 @@ fun AboutScreen(
             color = MaterialTheme.colorScheme.onBackground
         )
         
-        Spacer(modifier = Modifier.height(if (compact) 16.dp else 32.dp))
+        Spacer(modifier = Modifier.height(if (compact) 12.dp else 32.dp))
 
         Button(
             onClick = {
@@ -724,14 +755,12 @@ fun AboutScreen(
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = !isCheckingUpdate,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-            ),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
         ) {
             if (isCheckingUpdate) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onTertiaryContainer)
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onSurface)
             } else {
                 Text(stringResource(R.string.check_update_button))
             }
@@ -739,30 +768,64 @@ fun AboutScreen(
 
         Spacer(modifier = Modifier.height(if (compact) 4.dp else 8.dp))
 
-        Button(
-            onClick = onBackup,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            ),
-            contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
-        ) {
-            Text(stringResource(R.string.backup_button))
+        // Group Backup/Restore in a Row for boxy screens to save vertical space
+        if (compact) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onBackup,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    contentPadding = PaddingValues(vertical = 4.dp)
+                ) {
+                    Text(stringResource(R.string.backup_button), style = MaterialTheme.typography.labelSmall)
+                }
+                Button(
+                    onClick = { showRestoreConfirm = true },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    contentPadding = PaddingValues(vertical = 4.dp)
+                ) {
+                    Text(stringResource(R.string.restore_button), style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        } else {
+            Button(
+                onClick = onBackup,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            ) {
+                Text(stringResource(R.string.backup_button))
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { showRestoreConfirm = true },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            ) {
+                Text(stringResource(R.string.restore_button))
+            }
         }
 
         Spacer(modifier = Modifier.height(if (compact) 4.dp else 8.dp))
 
         Button(
-            onClick = { showRestoreConfirm = true },
+            onClick = {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/ruditimmermans"))
+                context.startActivity(intent)
+            },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            ),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
         ) {
-            Text(stringResource(R.string.restore_button))
+            Text(stringResource(R.string.donate_button), style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge)
         }
 
         Spacer(modifier = Modifier.height(if (compact) 8.dp else 16.dp))
@@ -770,10 +833,8 @@ fun AboutScreen(
         Button(
             onClick = onBack,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
         ) {
             Text(stringResource(R.string.back_button))

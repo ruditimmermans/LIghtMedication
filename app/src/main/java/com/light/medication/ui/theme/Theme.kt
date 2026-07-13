@@ -7,8 +7,8 @@ import androidx.compose.runtime.Composable
 private val BlackAndWhiteColorScheme = darkColorScheme(
     primary = White,
     onPrimary = Black,
-    primaryContainer = White,
-    onPrimaryContainer = Black,
+    primaryContainer = Black,
+    onPrimaryContainer = White,
     secondary = White,
     onSecondary = Black,
     secondaryContainer = Black,
