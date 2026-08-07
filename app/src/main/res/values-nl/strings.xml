@@ -51,5 +51,4 @@
     <string name="downloading_update">Update downloaden…</string>
     <string name="no_update_found">U heeft de nieuwste versie</string>
     <string name="update_failed">Update mislukt</string>
-    <string name="donate_button">Ontwikkeling ondersteunen (Ko-fi)</string>
 </resources>

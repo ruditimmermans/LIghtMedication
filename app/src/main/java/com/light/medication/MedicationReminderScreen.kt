@@ -813,21 +813,6 @@ fun AboutScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(if (compact) 4.dp else 8.dp))
-
-        Button(
-            onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/ruditimmermans"))
-                context.startActivity(intent)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
-        ) {
-            Text(stringResource(R.string.donate_button), style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge)
-        }
-
         Spacer(modifier = Modifier.height(if (compact) 8.dp else 16.dp))
         
         Button(

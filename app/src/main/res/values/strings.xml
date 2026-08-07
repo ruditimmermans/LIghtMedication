@@ -53,5 +53,4 @@
     <string name="downloading_update">Downloading update...</string>
     <string name="no_update_found">You have the latest version</string>
     <string name="update_failed">Update failed</string>
-    <string name="donate_button">Support Development (Ko-fi)</string>
 </resources>
