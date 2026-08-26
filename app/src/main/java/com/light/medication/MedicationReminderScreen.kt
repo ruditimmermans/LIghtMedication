@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
@@ -111,7 +112,6 @@ fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
             onBack = { showAboutScreen = false },
             onBackup = { backupLauncher.launch("medilight_backup.json") },
             onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
-            onViewLog = { showLogScreen = true },
             compact = isBoxyScreen
         )
     } else {
@@ -120,6 +120,9 @@ fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
                 CenterAlignedTopAppBar(
                     title = { Text(stringResource(R.string.screen_title)) },
                     actions = {
+                        IconButton(onClick = { showLogScreen = true }) {
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.log_title))
+                        }
                         IconButton(onClick = { showAboutScreen = true }) {
                             Icon(Icons.Default.Info, contentDescription = stringResource(R.string.about_button))
                         }
@@ -612,7 +615,6 @@ fun AboutScreen(
     onBack: () -> Unit,
     onBackup: () -> Unit,
     onRestore: () -> Unit,
-    onViewLog: () -> Unit,
     compact: Boolean = false
 ) {
     BackHandler(onBack = onBack)
@@ -737,7 +739,9 @@ fun AboutScreen(
         Text(
             text = stringResource(R.string.about_version, BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
         
         Spacer(modifier = Modifier.height(if (compact) 12.dp else 32.dp))
@@ -815,18 +819,6 @@ fun AboutScreen(
             ) {
                 Text(stringResource(R.string.restore_button))
             }
-        }
-
-        Spacer(modifier = Modifier.height(if (compact) 4.dp else 8.dp))
-
-        Button(
-            onClick = onViewLog,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-            contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
-        ) {
-            Text(stringResource(R.string.log_button), style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge)
         }
 
         Spacer(modifier = Modifier.height(if (compact) 8.dp else 16.dp))
