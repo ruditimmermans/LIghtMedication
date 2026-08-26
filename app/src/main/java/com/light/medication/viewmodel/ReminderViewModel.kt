@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.light.medication.ReminderScheduler
 import com.light.medication.data.AppDatabase
+import com.light.medication.data.MedicationLog
 import com.light.medication.data.Reminder
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -15,10 +16,19 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 class ReminderViewModel(application: Application) : AndroidViewModel(application) {
-    private val reminderDao = AppDatabase.getDatabase(application).reminderDao()
+    private val db = AppDatabase.getDatabase(application)
+    private val reminderDao = db.reminderDao()
+    private val logDao = db.medicationLogDao()
     private val scheduler = ReminderScheduler(application)
 
     val allReminders: StateFlow<List<Reminder>> = reminderDao.getAllReminders()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val allLogs: StateFlow<List<MedicationLog>> = logDao.getAllLogs()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -77,8 +87,16 @@ class ReminderViewModel(application: Application) : AndroidViewModel(application
 
     fun markAsTaken(reminder: Reminder) {
         viewModelScope.launch {
-            val updated = reminder.copy(lastTakenTimestamp = System.currentTimeMillis())
+            val timestamp = System.currentTimeMillis()
+            val updated = reminder.copy(lastTakenTimestamp = timestamp)
             reminderDao.update(updated)
+            
+            logDao.insert(MedicationLog(
+                reminderId = reminder.id,
+                medicationName = reminder.medicationName,
+                timestamp = timestamp,
+                action = "Taken"
+            ))
             
             // Cancel notification if it's currently showing
             val notificationManager = getApplication<Application>().getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
@@ -93,8 +111,16 @@ class ReminderViewModel(application: Application) : AndroidViewModel(application
 
     fun markAsSkipped(reminder: Reminder) {
         viewModelScope.launch {
-            val updated = reminder.copy(lastSkippedTimestamp = System.currentTimeMillis())
+            val timestamp = System.currentTimeMillis()
+            val updated = reminder.copy(lastSkippedTimestamp = timestamp)
             reminderDao.update(updated)
+
+            logDao.insert(MedicationLog(
+                reminderId = reminder.id,
+                medicationName = reminder.medicationName,
+                timestamp = timestamp,
+                action = "Skipped"
+            ))
 
             // Cancel notification if it's currently showing
             val notificationManager = getApplication<Application>().getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
@@ -104,6 +130,12 @@ class ReminderViewModel(application: Application) : AndroidViewModel(application
             if (updated.isEnabled) {
                 scheduler.scheduleReminder(updated, forceNext = true)
             }
+        }
+    }
+
+    fun clearLogs() {
+        viewModelScope.launch {
+            logDao.deleteAll()
         }
     }
 

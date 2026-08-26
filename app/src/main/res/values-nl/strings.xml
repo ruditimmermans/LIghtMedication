@@ -51,4 +51,12 @@
     <string name="downloading_update">Update downloaden…</string>
     <string name="no_update_found">U heeft de nieuwste versie</string>
     <string name="update_failed">Update mislukt</string>
+    <string name="log_button">Inname Logboek</string>
+    <string name="log_title">Innamegeschiedenis</string>
+    <string name="clear_log_button">Logboek wissen</string>
+    <string name="no_logs">Geen geschiedenis gevonden</string>
+    <string name="log_action_taken">Ingenomen</string>
+    <string name="log_action_skipped">Overgeslagen</string>
+    <string name="clear_log_confirm_title">Geschiedenis wissen?</string>
+    <string name="clear_log_confirm_message">Weet u zeker dat u de volledige innamegeschiedenis wilt verwijderen?</string>
 </resources>

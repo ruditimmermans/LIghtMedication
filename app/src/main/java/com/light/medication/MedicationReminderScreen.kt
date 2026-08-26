@@ -56,6 +56,7 @@ import kotlinx.coroutines.withContext
 fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
     val context = LocalContext.current
     var showAboutScreen by remember { mutableStateOf(false) }
+    var showLogScreen by remember { mutableStateOf(false) }
     var reminderToEdit by remember { mutableStateOf<Reminder?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
 
@@ -100,11 +101,17 @@ fun MedicationReminderScreen(viewModel: ReminderViewModel = viewModel()) {
         }
     }
 
-    if (showAboutScreen) {
+    if (showLogScreen) {
+        MedicationLogScreen(
+            onBack = { showLogScreen = false },
+            viewModel = viewModel
+        )
+    } else if (showAboutScreen) {
         AboutScreen(
             onBack = { showAboutScreen = false },
             onBackup = { backupLauncher.launch("medilight_backup.json") },
             onRestore = { restoreLauncher.launch(arrayOf("application/json")) },
+            onViewLog = { showLogScreen = true },
             compact = isBoxyScreen
         )
     } else {
@@ -428,10 +435,8 @@ fun ReminderItem(
             }
 
             reminder.lastTakenTimestamp?.let { timestamp ->
-                val sdf = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
-                val date = sdf.format(java.util.Date(timestamp))
                 Text(
-                    text = stringResource(R.string.last_taken_label, date),
+                    text = stringResource(R.string.last_taken_label, TimeUtils.formatFullDateTime(timestamp)),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
@@ -439,10 +444,8 @@ fun ReminderItem(
                 )
             }
             reminder.lastSkippedTimestamp?.let { timestamp ->
-                val sdf = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
-                val date = sdf.format(java.util.Date(timestamp))
                 Text(
-                    text = stringResource(R.string.last_skipped_label, date),
+                    text = stringResource(R.string.last_skipped_label, TimeUtils.formatFullDateTime(timestamp)),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.error,
@@ -609,6 +612,7 @@ fun AboutScreen(
     onBack: () -> Unit,
     onBackup: () -> Unit,
     onRestore: () -> Unit,
+    onViewLog: () -> Unit,
     compact: Boolean = false
 ) {
     BackHandler(onBack = onBack)
@@ -811,6 +815,18 @@ fun AboutScreen(
             ) {
                 Text(stringResource(R.string.restore_button))
             }
+        }
+
+        Spacer(modifier = Modifier.height(if (compact) 4.dp else 8.dp))
+
+        Button(
+            onClick = onViewLog,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+            contentPadding = if (compact) PaddingValues(vertical = 4.dp) else ButtonDefaults.ContentPadding
+        ) {
+            Text(stringResource(R.string.log_button), style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelLarge)
         }
 
         Spacer(modifier = Modifier.height(if (compact) 8.dp else 16.dp))

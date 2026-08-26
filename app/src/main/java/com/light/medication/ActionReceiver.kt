@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.light.medication.data.AppDatabase
+import com.light.medication.data.MedicationLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -26,11 +27,23 @@ class ActionReceiver : BroadcastReceiver() {
                 val reminder = reminders.find { it.id == reminderId }
                 
                 if (reminder != null) {
-                    val updatedReminder = when (intent.action) {
-                        "ACTION_DISMISSED" -> reminder.copy(lastSkippedTimestamp = System.currentTimeMillis())
-                        else -> reminder.copy(lastTakenTimestamp = System.currentTimeMillis())
+                    val timestamp = System.currentTimeMillis()
+                    val action = if (intent.action == "ACTION_DISMISSED") "Skipped" else "Taken"
+                    
+                    val updatedReminder = if (action == "Skipped") {
+                        reminder.copy(lastSkippedTimestamp = timestamp)
+                    } else {
+                        reminder.copy(lastTakenTimestamp = timestamp)
                     }
+                    
                     db.reminderDao().update(updatedReminder)
+                    
+                    db.medicationLogDao().insert(MedicationLog(
+                        reminderId = reminder.id,
+                        medicationName = reminder.medicationName,
+                        timestamp = timestamp,
+                        action = action
+                    ))
                 }
 
                 // For Android 15 compatibility, we should only start activity if it's a direct user interaction

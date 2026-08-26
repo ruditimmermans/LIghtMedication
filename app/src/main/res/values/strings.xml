@@ -53,4 +53,12 @@
     <string name="downloading_update">Downloading update...</string>
     <string name="no_update_found">You have the latest version</string>
     <string name="update_failed">Update failed</string>
+    <string name="log_button">Intake Log</string>
+    <string name="log_title">Intake History</string>
+    <string name="clear_log_button">Clear Log</string>
+    <string name="no_logs">No history found</string>
+    <string name="log_action_taken">Taken</string>
+    <string name="log_action_skipped">Skipped</string>
+    <string name="clear_log_confirm_title">Clear History?</string>
+    <string name="clear_log_confirm_message">Are you sure you want to delete all intake history?</string>
 </resources>
