@@ -53,9 +53,21 @@ class ReminderReceiver : BroadcastReceiver() {
 
     private fun shouldShowNotification(reminder: Reminder): Boolean {
         val lastAction = maxOf(reminder.lastTakenTimestamp ?: 0L, reminder.lastSkippedTimestamp ?: 0L)
-        if (lastAction == 0L) return true
-
         val now = Calendar.getInstance()
+        
+        // If never taken/skipped, check if the scheduled time for today has passed
+        if (lastAction == 0L) {
+            val scheduledToday = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, reminder.hour)
+                set(Calendar.MINUTE, reminder.minute)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            // Only show if we are within a reasonable window (e.g., 1 hour) of the scheduled time
+            // or if it's the very first time scheduling.
+            return now.timeInMillis >= scheduledToday.timeInMillis
+        }
+
         val lastActionCal = Calendar.getInstance().apply { timeInMillis = lastAction }
 
         return when (reminder.frequency) {
@@ -64,6 +76,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 lastActionCal.get(Calendar.DAY_OF_YEAR) != now.get(Calendar.DAY_OF_YEAR)
             }
             "Weekly" -> {
+                // Check if it's been at least 6 days since the last action
                 now.timeInMillis - lastAction > 6 * 24 * 60 * 60 * 1000L
             }
             "Monthly" -> {

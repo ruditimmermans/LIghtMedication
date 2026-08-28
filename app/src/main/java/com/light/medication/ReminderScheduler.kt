@@ -37,12 +37,14 @@ class ReminderScheduler(private val context: Context) {
         )
 
         val calendar = Calendar.getInstance().apply {
+            timeInMillis = System.currentTimeMillis()
             set(Calendar.HOUR_OF_DAY, reminder.hour)
             set(Calendar.MINUTE, reminder.minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
             
-            if (forceNext || timeInMillis <= System.currentTimeMillis()) {
+            // Ensure the alarm is set in the future
+            if (timeInMillis <= System.currentTimeMillis() || forceNext) {
                 when (reminder.frequency) {
                     "Daily" -> add(Calendar.DAY_OF_YEAR, 1)
                     "Weekly" -> add(Calendar.WEEK_OF_YEAR, 1)
