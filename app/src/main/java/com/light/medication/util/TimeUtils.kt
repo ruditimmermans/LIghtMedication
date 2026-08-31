@@ -1,23 +1,27 @@
 package com.light.medication.util
 
-import android.content.Context
-import java.util.Calendar
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 object TimeUtils {
+    private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.getDefault())
+
     fun formatTime(hour: Int, minute: Int): String {
-        return String.format(java.util.Locale.getDefault(), "%02d:%02d", hour, minute)
+        return String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
     }
 
     fun isTakenToday(timestamp: Long?): Boolean {
         if (timestamp == null) return false
-        val cal1 = Calendar.getInstance()
-        val cal2 = Calendar.getInstance().apply { timeInMillis = timestamp }
-        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-               cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+        val now = LocalDateTime.now(ZoneId.systemDefault())
+        val takenTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault())
+        return now.toLocalDate() == takenTime.toLocalDate()
     }
 
     fun formatFullDateTime(timestamp: Long): String {
-        val sdf = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault())
-        return sdf.format(java.util.Date(timestamp))
+        val dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneId.systemDefault())
+        return dateTime.format(dateTimeFormatter)
     }
 }

@@ -44,16 +44,15 @@ class ActionReceiver : BroadcastReceiver() {
                         timestamp = timestamp,
                         action = action
                     ))
+                    
+                    // Reschedule for the next occurrence
+                    val scheduler = ReminderScheduler(context)
+                    scheduler.scheduleReminder(updatedReminder, forceNext = true)
                 }
 
-                // For Android 15 compatibility, we should only start activity if it's a direct user interaction
-                // and the intent action expects it.
-                if (intent.action != "ACTION_DISMISSED") {
-                    val mainIntent = Intent(context, MainActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    }
-                    context.startActivity(mainIntent)
-                }
+                // In Android 15, starting an activity from a background receiver is restricted.
+                // We've moved the main activity launch to the Notification's contentIntent.
+                // The "Mark as Taken" action now just updates the database and closes the notification.
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {

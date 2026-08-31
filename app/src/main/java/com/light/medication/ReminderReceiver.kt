@@ -7,7 +7,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.light.medication.data.AppDatabase
 import com.light.medication.data.Reminder
@@ -15,7 +14,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.util.Calendar
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -53,35 +55,32 @@ class ReminderReceiver : BroadcastReceiver() {
 
     private fun shouldShowNotification(reminder: Reminder): Boolean {
         val lastAction = maxOf(reminder.lastTakenTimestamp ?: 0L, reminder.lastSkippedTimestamp ?: 0L)
-        val now = Calendar.getInstance()
+        val now = LocalDateTime.now(ZoneId.systemDefault())
         
         // If never taken/skipped, check if the scheduled time for today has passed
         if (lastAction == 0L) {
-            val scheduledToday = Calendar.getInstance().apply {
-                set(Calendar.HOUR_OF_DAY, reminder.hour)
-                set(Calendar.MINUTE, reminder.minute)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }
+            val scheduledToday = now.withHour(reminder.hour)
+                .withMinute(reminder.minute)
+                .withSecond(0)
+                .withNano(0)
+            
             // Only show if we are within a reasonable window (e.g., 1 hour) of the scheduled time
             // or if it's the very first time scheduling.
-            return now.timeInMillis >= scheduledToday.timeInMillis
+            return !now.isBefore(scheduledToday)
         }
 
-        val lastActionCal = Calendar.getInstance().apply { timeInMillis = lastAction }
+        val lastActionTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(lastAction), ZoneId.systemDefault())
 
         return when (reminder.frequency) {
             "Daily" -> {
-                lastActionCal.get(Calendar.YEAR) != now.get(Calendar.YEAR) ||
-                lastActionCal.get(Calendar.DAY_OF_YEAR) != now.get(Calendar.DAY_OF_YEAR)
+                now.toLocalDate().isAfter(lastActionTime.toLocalDate())
             }
             "Weekly" -> {
                 // Check if it's been at least 6 days since the last action
-                now.timeInMillis - lastAction > 6 * 24 * 60 * 60 * 1000L
+                ChronoUnit.DAYS.between(lastActionTime, now) >= 6
             }
             "Monthly" -> {
-                lastActionCal.get(Calendar.YEAR) != now.get(Calendar.YEAR) ||
-                lastActionCal.get(Calendar.MONTH) != now.get(Calendar.MONTH)
+                now.year != lastActionTime.year || now.monthValue != lastActionTime.monthValue
             }
             else -> true
         }
@@ -109,27 +108,35 @@ class ReminderReceiver : BroadcastReceiver() {
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                context.getString(R.string.channel_name),
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = context.getString(R.string.channel_description)
-                enableVibration(true)
-                setShowBadge(true)
-            }
-            notificationManager.createNotificationChannel(channel)
+        val channel = NotificationChannel(
+            channelId,
+            context.getString(R.string.channel_name),
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = context.getString(R.string.channel_description)
+            enableVibration(true)
+            setShowBadge(true)
         }
+        notificationManager.createNotificationChannel(channel)
 
-        val activityIntent = Intent(context, ActionReceiver::class.java).apply {
-            action = "ACTION_TAKEN"
-            putExtra("REMINDER_ID", notificationId)
+        val activityIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        val pendingIntent = PendingIntent.getBroadcast(
+        val contentPendingIntent = PendingIntent.getActivity(
             context,
             notificationId,
             activityIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val takenIntent = Intent(context, ActionReceiver::class.java).apply {
+            action = "ACTION_TAKEN"
+            putExtra("REMINDER_ID", notificationId)
+        }
+        val takenPendingIntent = PendingIntent.getBroadcast(
+            context,
+            notificationId + 2000,
+            takenIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -154,13 +161,13 @@ class ReminderReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(contentPendingIntent)
             .setDeleteIntent(dismissedPendingIntent)
             .setAutoCancel(true)
             .addAction(
                 R.drawable.ic_launcher_foreground,
                 context.getString(R.string.mark_as_taken_button),
-                pendingIntent
+                takenPendingIntent
             )
             .build()
 

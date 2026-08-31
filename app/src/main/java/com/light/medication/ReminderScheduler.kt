@@ -6,7 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.light.medication.data.Reminder
-import java.util.Calendar
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 class ReminderScheduler(private val context: Context) {
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -36,26 +37,24 @@ class ReminderScheduler(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = System.currentTimeMillis()
-            set(Calendar.HOUR_OF_DAY, reminder.hour)
-            set(Calendar.MINUTE, reminder.minute)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-            
-            // Ensure the alarm is set in the future
-            if (timeInMillis <= System.currentTimeMillis() || forceNext) {
-                when (reminder.frequency) {
-                    "Daily" -> add(Calendar.DAY_OF_YEAR, 1)
-                    "Weekly" -> add(Calendar.WEEK_OF_YEAR, 1)
-                    "Monthly" -> add(Calendar.MONTH, 1)
-                    else -> add(Calendar.DAY_OF_YEAR, 1)
-                }
+        val now = ZonedDateTime.now(ZoneId.systemDefault())
+        var scheduledTime = now.withHour(reminder.hour)
+            .withMinute(reminder.minute)
+            .withSecond(0)
+            .withNano(0)
+
+        // Ensure the alarm is set in the future
+        if (scheduledTime.isBefore(now) || forceNext) {
+            scheduledTime = when (reminder.frequency) {
+                "Daily" -> scheduledTime.plusDays(1)
+                "Weekly" -> scheduledTime.plusWeeks(1)
+                "Monthly" -> scheduledTime.plusMonths(1)
+                else -> scheduledTime.plusDays(1)
             }
         }
 
         val alarmClockInfo = AlarmManager.AlarmClockInfo(
-            calendar.timeInMillis,
+            scheduledTime.toInstant().toEpochMilli(),
             pendingIntent
         )
         alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
