@@ -2,9 +2,11 @@
 
 An Medication app that helps you keep track of your medications.
 
+[IMPORTANT INFO] My apps are no longer specifically designed for the Light Phone 3, as I have sold the device; all my apps are now being updated for Android 15 and up. However, they will retain the same look and feel.
+
 ## About
 
-MediLight is an Light Phone 3 app designed to make it easier for users to keep track of their medications and to help them remember to take them. 
+MediLight is an Android app designed to make it easier for users to keep track of their medications and to help them remember to take them. 
 All user data is stored locally is not share with either the developer or any other third party.
 
 ## Screenshots 📷
