@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.light.medication.data.MedicationLog
 import com.light.medication.util.TimeUtils
 import com.light.medication.viewmodel.ReminderViewModel
 
@@ -26,6 +27,7 @@ fun MedicationLogScreen(
 ) {
     val logs by viewModel.allLogs.collectAsState()
     var showClearConfirm by remember { mutableStateOf(false) }
+    var logToDelete by remember { mutableStateOf<MedicationLog?>(null) }
 
     Scaffold(
         topBar = {
@@ -68,23 +70,34 @@ fun MedicationLogScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = log.medicationName,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = if (log.action == "Taken") stringResource(R.string.log_action_taken) else stringResource(R.string.log_action_skipped),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = if (log.action == "Taken") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = log.medicationName,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = TimeUtils.formatFullDateTime(log.timestamp),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = if (log.action == "Taken") stringResource(R.string.log_action_taken) else stringResource(R.string.log_action_skipped),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = if (log.action == "Taken") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                    )
+                                    IconButton(onClick = { logToDelete = log }) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = stringResource(R.string.delete_button),
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = TimeUtils.formatFullDateTime(log.timestamp),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                         }
                     }
                 }
@@ -107,6 +120,27 @@ fun MedicationLogScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClearConfirm = false }) {
+                    Text(stringResource(R.string.cancel_button))
+                }
+            }
+        )
+    }
+
+    logToDelete?.let { log ->
+        AlertDialog(
+            onDismissRequest = { logToDelete = null },
+            title = { Text(stringResource(R.string.delete_button)) },
+            text = { Text(stringResource(R.string.clear_log_confirm_message)) }, // Reusing message for simplicity, or could add a specific one
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteLog(log)
+                    logToDelete = null
+                }) {
+                    Text(stringResource(R.string.delete_button), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { logToDelete = null }) {
                     Text(stringResource(R.string.cancel_button))
                 }
             }

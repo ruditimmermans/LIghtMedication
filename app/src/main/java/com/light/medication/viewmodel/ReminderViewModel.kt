@@ -139,6 +139,12 @@ class ReminderViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun deleteLog(log: MedicationLog) {
+        viewModelScope.launch {
+            logDao.delete(log)
+        }
+    }
+
     fun exportBackup(uri: Uri, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
         viewModelScope.launch {
             try {
